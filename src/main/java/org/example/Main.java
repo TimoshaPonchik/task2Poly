@@ -14,9 +14,9 @@ import java.util.*;
 public class Main {
     @Option(name = "-i", usage = "String comparisons should be case-insensitive")
     private boolean register;
-    @Option(name = "-u", usage = "Only unique strings")
+    @Option(name = "-u", usage = "Only unique strings", forbids = {"-c"})
     private boolean unique;
-    @Option(name = "-c", usage = "Printing the number of lines that have been replaced")
+    @Option(name = "-c", usage = "Printing the number of lines that have been replaced", forbids = {"-u"})
     private boolean change;
     @Option(name = "-s", usage = "Ignore first (default: 0) symbols of each string", metaVar = "num")
     private int num;
@@ -27,32 +27,36 @@ public class Main {
     private List<String> arguments = new ArrayList<String>();
 
     public static void main(String[] args) throws CmdLineException, IOException {
+        System.out.println(Arrays.toString(args));
+        if (!Arrays.toString(args).matches("\\[(-[iuc], ){0,3}(-s, [0-9]+, )?(-o, [^-]+)?")) {
+            throw new IllegalArgumentException("Некорректный ввод");
+        }
         new Main().parser(args);
     }
 
-    private void parser(String[] args) throws CmdLineException, IOException {
+    void parser(String[] args) throws CmdLineException, IOException {
         CmdLineParser parser = new CmdLineParser(this);
         parser.parseArgument(args);
-        algorithm();
+        algorithm(arguments, register, unique, change, num, ofile);
     }
 
-    public void algorithm() throws IOException {
+    void algorithm(List<String> arguments, boolean register, boolean unique, boolean change, int num, String ofile) throws IOException {
         int colivo = 0;
         String temp = "";
         String line = "";
+        File file = new File(arguments.get(0));
+        FileReader fr = new FileReader(file);
+        BufferedReader reader = new BufferedReader(fr);
+        Scanner abc = new Scanner(System.in);
         List<String> lines = new ArrayList<>();
         while (!Objects.equals(line, "`") && line != null) {
             if (arguments.isEmpty()) {
-                Scanner abc = new Scanner(System.in);
                 if (register) {
                     line = abc.nextLine().toLowerCase();
                 } else {
                     line = abc.nextLine();
                 }
             } else {
-                File file = new File(arguments.get(0));
-                FileReader fr = new FileReader(file);
-                BufferedReader reader = new BufferedReader(fr);
                 if (register) {
                     try {
                         line = reader.readLine().toLowerCase();
@@ -82,10 +86,10 @@ public class Main {
             }
             temp = line;
         }
-        inputer(lines);
+        inputer(lines, ofile);
     }
 
-    public String removefirstChar(String str, Integer num) {
+    private String removefirstChar(String str, Integer num) {
         if (str == null || str.length() == 0 || str.equals("`")) {
             return str;
         }
@@ -96,7 +100,7 @@ public class Main {
         }
     }
 
-    public void inputer(List<String> list) throws IOException {
+    private void inputer(List<String> list, String ofile) throws IOException {
         if (ofile == null) {
             for (String line : list) {
                 System.out.println(line);
